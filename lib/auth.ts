@@ -1,10 +1,11 @@
-import NextAuth, { type NextAuthConfig } from 'next-auth';
+import { getServerSession } from 'next-auth';
+import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { compare } from 'bcryptjs';
 
 const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || '';
 
-const config: NextAuthConfig = {
+const authConfig = {
   providers: [
     CredentialsProvider({
       credentials: {
@@ -40,16 +41,9 @@ const config: NextAuthConfig = {
     signIn: '/login',
   },
   session: {
-    strategy: 'jwt',
-  },
-  callbacks: {
-    async jwt({ token }) {
-      return token;
-    },
-    async session({ session }) {
-      return session;
-    },
+    strategy: 'jwt' as const,
   },
 };
 
-export const { handlers, auth, signIn, signOut } = NextAuth(config);
+export const auth = () => getServerSession(authConfig);
+export const signOut = () => null; // Placeholder for backwards compatibility
