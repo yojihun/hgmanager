@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SessionType {
+  SAT_REGULAR
+  SUN_REGULAR
+  SPECIAL_MATCH
+}
+
+enum SessionStatus {
+  UPCOMING
+  ACTIVE
+  CLOSED
+}
+
+enum AttendanceStatus {
+  PENDING
+  ATTENDING
+  NOT_ATTENDING
+}
+
+model Kid {
+  id                String   @id @default(cuid())
+  name              String
+  defaultAttendSat  Boolean  @default(true)
+  defaultAttendSun  Boolean  @default(true)
+  defaultPickupSat  Boolean  @default(false)
+  defaultPickupSun  Boolean  @default(false)
+  parent            Parent?
+  attendance        AttendanceRecord[]
+  createdAt         DateTime @default(now())
+
+  @@index([name])
+}
+
+model Parent {
+  id           String   @id @default(cuid())
+  kid          Kid      @relation(fields: [kidId], references: [id], onDelete: Cascade)
+  kidId        String   @unique
+  kakaoUserId  String?  @unique
+  name         String?
+  phone        String?
+  registeredAt DateTime?
+}
+
+model Session {
+  id          String           @id @default(cuid())
+  date        DateTime
+  type        SessionType
+  title       String
+  description String?
+  status      SessionStatus    @default(UPCOMING)
+  attendance  AttendanceRecord[]
+  createdAt   DateTime         @default(now())
+
+  @@index([date])
+  @@index([status])
+}
+
+model AttendanceRecord {
+  id               String           @id @default(cuid())
+  session          Session          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId        String
+  kid              Kid              @relation(fields: [kidId], references: [id], onDelete: Cascade)
+  kidId            String
+  status           AttendanceStatus @default(PENDING)
+  needsPickup      Boolean?
+  pickupNotifiedAt DateTime?
+  respondedAt      DateTime?
+
+  @@unique([sessionId, kidId])
+  @@index([status])
+}
